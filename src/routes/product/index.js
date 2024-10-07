@@ -6,17 +6,17 @@ const { authentication } = require('../../auth/authUtils');
 
 
 router.get('/search/:keySearch',asyncHandler(productControler.getListSearchProducts))
-
+router.get('/',asyncHandler(productControler.getAllProducts))
+router.get('/:product_id',asyncHandler(productControler.getProduct))
 
 router.use(authentication)
 router.post('',asyncHandler(productControler.createProduct))
-router.post('/published/:id',asyncHandler(productControler.publishProductByShop))
-router.post('/unpublished/:id',asyncHandler(productControler.unpublishProductByShop))
-
-
+router.patch('/:product_id',asyncHandler(productControler.updateProduct))
 
 router.get('/drafts/all',asyncHandler(productControler.getAllDraftForShop))
 router.get('/published/all',asyncHandler(productControler.getAllPublishedForShop))
 
+router.post('/published/:id',asyncHandler(productControler.publishProductByShop))
+router.post('/unpublished/:id',asyncHandler(productControler.unpublishProductByShop))
 
 module.exports = router;

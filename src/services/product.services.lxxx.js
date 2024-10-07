@@ -2,7 +2,10 @@ const { product, clothing, electronic, furniture } = require('../models/product.
 const { BadRequestError } = require('../core/error.response')
 const { findAllDraftForShop, publishProductByShop,
     findAllPublishedForShop, unpublishProductByShop,
-    seachProductsByUser } = require('../models/repositories/product.repo')
+    seachProductsByUser, findAllProducts, findProduct,
+    updateProductById } = require('../models/repositories/product.repo')
+const { updateNestedObjectParser, removeUndefineNullObject } = require('../utils/index');
+const { insertInventory } = require('../models/repositories/inventory.repo');
 class ProductFactory {
     /*
     type: clothing, electronic
@@ -26,6 +29,11 @@ class ProductFactory {
         //         throw new BadRequestError(`Invalid product type ${type}`)
         // }
     }
+    static async updateProduct(type, payload, product_id) {
+        const productClass = ProductFactory.productRegistry[type];
+        if (!productClass) throw new BadRequestError(`Invalid product type ${type}`)
+        return new productClass(payload).updateProduct(product_id)
+    }
 
     static async findAllDraftsForShop({ product_shop, limit = 50, skip = 0 }) {
         const query = { product_shop, isDraft: true }
@@ -45,8 +53,19 @@ class ProductFactory {
         return await unpublishProductByShop({ product_shop, product_id })
     }
 
-    static async seachProducts({keySearch}) {
-        return await seachProductsByUser({keySearch})
+    static async seachProducts({ keySearch }) {
+        return await seachProductsByUser({ keySearch })
+    }
+
+    static async findAllProducts({ limit = 50, sort = 'ctime', page = 1, filter = { isPublished: true } }) {
+        return await findAllProducts({
+            limit, sort, page, filter,
+            select: ['product_name', 'product_thumb', 'product_price']
+        })
+    }
+
+    static async findProduct({ product_id }) {
+        return await findProduct({ product_id: product_id, unSelect: ['__v'] })
     }
 }
 
@@ -66,7 +85,19 @@ class Product {
     }
 
     async createProduct(product_id) {
-        return await product.create({ ...this, _id: product_id })
+        const newProduct = await product.create({ ...this, _id: product_id })
+        if (newProduct) {
+            await insertInventory({
+                productId: newProduct._id,
+                shopId: this.product_shop,
+                stock: this.product_quantity
+            })
+        }
+        return newProduct;
+    }
+
+    async updateProduct(product_id, bodyUpdate) {
+        return await updateProductById({ product_id, bodyUpdate, model: product })
     }
 }
 
@@ -80,6 +111,15 @@ class Clothing extends Product {
         const newProduct = super.createProduct()
         if (!newProduct) throw new BadRequestError('create new product error')
         return newProduct
+    }
+
+    async updateProduct(product_id) {
+        const objectParams = removeUndefineNullObject(this);
+        if (objectParams.product_attributes) {
+            await updateProductById({ product_id, bodyUpdate: updateNestedObjectParser(objectParams.product_attributes), model: clothing })
+        }
+        const updateProduct = await super.updateProduct(product_id, updateNestedObjectParser(objectParams));
+        return updateProduct;
     }
 }
 

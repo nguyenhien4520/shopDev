@@ -26,6 +26,16 @@ class ProductController {
         }).send(res)
     }
 
+    updateProduct = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'update product successfully',
+            metadata: await ProductServiceV2.updateProduct(req.body.product_type,{
+                ...req.body,
+                product_shop: req.user.userId
+            }, req.params.product_id)
+        }).send(res)
+    }
+
     getAllDraftForShop = async (req, res, next) => {
         new SuccessResponse({
             message: 'get list draft success',
@@ -71,7 +81,22 @@ class ProductController {
         }).send(res)
     }
 
+    getAllProducts = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'get all products success',
+            metadata: await ProductServiceV2.findAllProducts(req.query)
+        }).send(res)
+    }
 
+    getProduct = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'get detail product success',
+            metadata: await ProductServiceV2.findProduct({
+                product_id: req.params.product_id,
+
+            })
+        }).send(res)
+    }
 
 
 }
