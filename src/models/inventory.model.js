@@ -9,13 +9,13 @@ const inventorySchema = new Schema({
    inven_location: {type: String, default: 'unknown'},
    inven_stock: {type: Number, require: true},
    inven_shopId: {type: Schema.Types.ObjectId, ref: 'Shop'},
-   inven_reservation: {type: Array, default: []} /* [{cartId: , stock: 1, createdOn: }, .... ]*/
+   inven_reservation: {type: Array, default: []} /* [{cartId: , quantity: 1, createdOn: }, .... ]*/
 
 },{
     timestamps: true,
     collection: COLLECTION_NAME
 })
 
-module.exports = model(DOCUMENT_NAME, inventorySchema);
+module.exports ={inventory: model(DOCUMENT_NAME, inventorySchema)} 
 
 
